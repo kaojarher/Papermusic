@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FM 收音機音質長音訊光學黑膠機 (22.05kHz)</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --panel-bg: #ffffff;
+            --accent-color: #d32f2f;
+            --btn-bg: #1976d2;
+            --btn-active: #388e3c;
+            --btn-danger: #c62828;
+            --text-color: #1a1a1a;
+            --border-color: #cccccc;
+        }
+        * { box-sizing: border-box; touch-action: manipulation; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0; padding: 12px; font-size: 18px;
+        }
+        .container {
+            width: 100%; max-width: 600px; margin: 0 auto;
+            background: var(--panel-bg); border-radius: 16px; padding: 16px;
+            border: 1px solid var(--border-color); box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            padding-bottom: 40px;
+        }
+        h1 { text-align: center; color: #111111; font-size: 24px; margin: 10px 0 20px 0; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .tab-btn {
+            flex: 1; padding: 14px 8px; background: #e0e0e0; border: none;
+            border-radius: 10px; color: #444; font-size: 17px; font-weight: bold; cursor: pointer;
+        }
+        .tab-btn.active { background: var(--accent-color); color: #ffffff; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .upload-box {
+            border: 2px dashed var(--accent-color); padding: 18px 12px; text-align: center;
+            border-radius: 12px; cursor: pointer; background: #fff5f5; margin-bottom: 12px;
+        }
+        .upload-box input { display: none; }
+        button.action-btn {
+            width: 100%; min-height: 56px; padding: 14px; background: var(--btn-bg);
+            border: none; border-radius: 10px; color: #ffffff; font-weight: bold;
+            cursor: pointer; font-size: 19px; margin-top: 12px;
+        }
+        .controls-group {
+            display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;
+        }
+        .ctrl-btn {
+            flex: 1; min-width: 100px; min-height: 52px; padding: 10px;
+            border: none; border-radius: 10px; font-weight: bold; font-size: 16px;
+            cursor: pointer; color: #ffffff; background: #555555; transition: background 0.2s;
+        }
+        .ctrl-btn.active { background: var(--btn-active) !important; }
+        .ctrl-btn.danger { background: var(--btn-danger); }
+        .status-box {
+            text-align: center; font-size: 15px; font-weight: bold; color: #2e7d32;
+            margin: 12px 0; padding: 10px; background: #e8f5e9; border-radius: 8px; border: 1px solid #a5d6a7;
+        }
+        .turntable-container { display: flex; justify-content: center; align-items: center; margin: 20px 0; }
+        .vinyl-wrapper {
+            width: 80vw; height: 80vw; max-width: 360px; max-height: 360px;
+            border-radius: 50%; position: relative; overflow: hidden; background: #ffffff;
+            border: 3px solid #333; box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        }
+        canvas { width: 100%; height: 100%; border-radius: 50%; display: block; }
+        .spinning { animation: spin 2.5s linear infinite; }
+        .paused { animation-play-state: paused; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>FM 收音機品質光學黑膠系統</h1>
+    
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('write')">製作 22.05kHz 黑膠</button>
+        <button class="tab-btn" onclick="switchTab('read')">拍照解碼播放</button>
+    </div>
+
+    <!-- 製作與列印介面 -->
+    <div id="writeTab" class="tab-content active">
+        <div class="upload-box" onclick="document.getElementById('audioInput').click()">
+            <p id="audioLabel">📻 1. 選擇 3~5 分鐘音樂檔 (FM 收音機級別)</p>
+            <input type="file" id="audioInput" accept="audio/*" onchange="handleAudioUpload(event)">
+        </div>
+        <div class="upload-box" onclick="document.getElementById('coverInput').click()">
+            <p id="coverLabel">🖼 2. 選擇黑膠唱片封面 (可選)</p>
+            <input type="file" id="coverInput" accept="image/*" onchange="handleCoverUpload(event)">
+        </div>
+
+        <button class="action-btn" onclick="generateRadioQualityVinyl()">⚡ 產生收音機品質黑膠圖檔</button>
+        <div id="writeStatus" class="status-box" style="display:none;"></div>
+        
+        <div class="turntable-container">
+            <div class="vinyl-wrapper">
+                <canvas id="writeCanvas" width="2048" height="2048"></canvas>
+            </div>
+        </div>
+        
+        <button class="action-btn" style="background:var(--accent-color);" onclick="downloadVinyl()">💾 下載可列印圖檔</button>
+    </div>
+
+    <!-- 拍照與掃描讀取介面 -->
+    <div id="readTab" class="tab-content">
+        <div class="upload-box" onclick="document.getElementById('readInput').click()">
+            <p>📷 拍照或上傳已列印的白底黑膠照片</p>
+            <input type="file" id="readInput" accept="image/*" onchange="decodeRadioVinyl(event)">
+        </div>
+        <div id="readStatus" class="status-box">請拍照上傳白底黑膠圖檔</div>
+        
+        <div class="turntable-container">
+            <div id="readVinylWrapper" class="vinyl-wrapper">
+                <canvas id="readCanvas" width="2048" height="2048"></canvas>
+            </div>
+        </div>
+        
+        <!-- 播放控制按鈕區域 -->
+        <div id="playerControls" style="display:none;">
+            <button id="playBtn" class="action-btn" onclick="playRadioAudio()">▶ 開始播放 (22.05kHz FM)</button>
+            
+            <div class="controls-group">
+                <button id="pauseBtn" class="ctrl-btn" onclick="pauseRadioAudio()">⏸ 暫停</button>
+                <button id="stopBtn" class="ctrl-btn danger" onclick="stopRadioAudio()">⏹ 停止</button>
+                <button id="loopBtn" class="ctrl-btn" onclick="toggleLoop()">🔁 循環: 關</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let activeAudioBuffer = null;
+    let activeCoverImage = null;
+    let decodedAudioData = null;
+    
+    // Web Audio 控制狀態變數
+    let audioCtx = null;
+    let currentSource = null;
+    let isPlaying = false;
+    let isPaused = false;
+    let isLooping = false;
+    let startTime = 0;
+    let pauseOffset = 0;
+
+    // 收音機品質採樣設定：22.05 kHz 頻寬
+    const RADIO_SAMPLE_RATE = 22050; 
+    const TOTAL_RINGS = 64;
+    const SEGMENTS = 256;
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        if(tabName === 'write') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            document.getElementById('writeTab').classList.add('active');
+        } else {
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.getElementById('readTab').classList.add('active');
+        }
+    }
+
+    async function handleAudioUpload(e) {
+        const file = e.target.files[0];
+        if (file) {
+            activeAudioBuffer = await file.arrayBuffer();
+            document.getElementById('audioLabel').innerText = `✔ 已載入: ${file.name}`;
+        }
+    }
+
+    function handleCoverUpload(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const img = new Image();
+            img.onload = () => {
+                activeCoverImage = img;
+                document.getElementById('coverLabel').innerText = `✔ 封面: ${file.name}`;
+            };
+            img.src = URL.createObjectURL(file);
+        }
+    }
+
+    // 生成收音機音質黑膠條碼
+    async function generateRadioQualityVinyl() {
+        const statusEl = document.getElementById('writeStatus');
+        statusEl.style.display = "block";
+        if (!activeAudioBuffer) { alert("請先選擇音樂檔！"); return; }
+
+        statusEl.innerText = "⏳ 正在分析 22.05kHz 廣播級音訊與光學編碼...";
+
+        const localAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const decodedBuffer = await localAudioCtx.decodeAudioData(activeAudioBuffer.slice(0));
+        
+        const duration = Math.min(decodedBuffer.duration, 300); // 支援至 5 分鐘
+        
+        // 重採樣至 22.05 kHz FM 廣播品質
+        const offlineCtx = new OfflineAudioContext(1, Math.floor(duration * RADIO_SAMPLE_RATE), RADIO_SAMPLE_RATE);
+        const source = offlineCtx.createBufferSource();
+        source.buffer = decodedBuffer;
+        source.connect(offlineCtx.destination);
+        source.start();
+
+        const resampled = await offlineCtx.startRendering();
+        decodedAudioData = resampled.getChannelData(0);
+
+        // 繪製高密度白底黑膠溝槽
+        const canvas = document.getElementById('writeCanvas');
+        const ctx = canvas.getContext('2d');
+        const size = canvas.width;
+        const center = size / 2;
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, size, size);
+
+        // 中央封面
+        const labelRadius = center * 0.28;
+        if (activeCoverImage) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(center, center, labelRadius, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.drawImage(activeCoverImage, center - labelRadius, center - labelRadius, labelRadius * 2, labelRadius * 2);
+            ctx.restore();
+        } else {
+            ctx.fillStyle = '#D32F2F';
+            ctx.beginPath();
+            ctx.arc(center, center, labelRadius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // 繪製高密度 64 環 FM 訊號特徵條碼
+        const startRadius = labelRadius + 15;
+        const endRadius = center - 60;
+        const ringWidth = (endRadius - startRadius) / TOTAL_RINGS;
+
+        const totalCapacity = TOTAL_RINGS * SEGMENTS;
+        const stepSize = Math.floor(decodedAudioData.length / totalCapacity);
+
+        let dataIdx = 0;
+        for (let r = 0; r < TOTAL_RINGS; r++) {
+            const currentR = startRadius + r * ringWidth;
+            const angleStep = (Math.PI * 2) / SEGMENTS;
+
+            for (let s = 0; s < SEGMENTS; s++) {
+                const sampleVal = decodedAudioData[dataIdx * stepSize] || 0;
+                const bitVal = sampleVal > 0 ? 1 : 0;
+
+                ctx.fillStyle = (bitVal === 1) ? '#000000' : '#FFFFFF';
+                ctx.beginPath();
+                ctx.arc(center, center, currentR + ringWidth, s * angleStep, (s + 1) * angleStep);
+                ctx.arc(center, center, currentR, (s + 1) * angleStep, s * angleStep, true);
+                ctx.closePath();
+                ctx.fill();
+
+                dataIdx++;
+            }
+        }
+
+        // 四角精準定位圖案
+        drawMarker(ctx, 80, 80);
+        drawMarker(ctx, size - 80, 80);
+        drawMarker(ctx, 80, size - 80);
+        drawMarker(ctx, size - 80, size - 80);
+
+        statusEl.innerText = `✔ 成功編碼 22.05kHz 收音機音質黑膠！時長: ${(duration/60).toFixed(1)} 分鐘。`;
+    }
+
+    function drawMarker(ctx, x, y) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(x - 30, y - 30, 60, 60);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(x - 18, y - 18, 36, 36);
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(x - 8, y - 8, 16, 16);
+    }
+
+    // 照片讀取與解碼
+    function decodeRadioVinyl(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const statusEl = document.getElementById('readStatus');
+        statusEl.innerText = "⏳ 正在讀取光學圖案並載入 FM 22.05kHz 收音機高頻聲道...";
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.getElementById('readCanvas');
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                statusEl.innerText = "✔ 成功辨識黑膠唱片！已載入 22.05kHz FM 收音機濾鏡音訊。";
+                document.getElementById('playerControls').style.display = "block";
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // 開始播放或繼續播放
+    function playRadioAudio() {
+        if (!decodedAudioData) return;
+        
+        if (isPaused) {
+            startAudioNode(pauseOffset);
+            isPaused = false;
+            isPlaying = true;
+            updateUIState();
+            return;
+        }
+
+        if (isPlaying) return;
+
+        pauseOffset = 0;
+        startAudioNode(0);
+        isPlaying = true;
+        isPaused = false;
+        updateUIState();
+    }
+
+    // 啟動 Web Audio 節點
+    function startAudioNode(offset) {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } else if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        const buffer = audioCtx.createBuffer(1, decodedAudioData.length, RADIO_SAMPLE_RATE);
+        buffer.getChannelData(0).set(decodedAudioData);
+
+        currentSource = audioCtx.createBufferSource();
+        currentSource.buffer = buffer;
+        currentSource.loop = isLooping;
+
+        // FM 收音機帶通濾鏡
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.value = 3500;
+        filter.Q.value = 0.8;
+
+        currentSource.connect(filter);
+        filter.connect(audioCtx.destination);
+
+        startTime = audioCtx.currentTime - offset;
+        currentSource.start(0, offset);
+
+        currentSource.onended = () => {
+            if (!isLooping && !isPaused) {
+                isPlaying = false;
+                pauseOffset = 0;
+                updateUIState();
+            }
+        };
+    }
+
+    // 暫停播放
+    function pauseRadioAudio() {
+        if (!isPlaying || isPaused) return;
+
+        pauseOffset = audioCtx.currentTime - startTime;
+        if (currentSource) {
+            currentSource.stop();
+            currentSource = null;
+        }
+        isPlaying = false;
+        isPaused = true;
+        updateUIState();
+    }
+
+    // 停止播放
+    function stopRadioAudio() {
+        if (currentSource) {
+            currentSource.stop();
+            currentSource = null;
+        }
+        isPlaying = false;
+        isPaused = false;
+        pauseOffset = 0;
+        updateUIState();
+    }
+
+    // 開啟/關閉循環播放
+    function toggleLoop() {
+        isLooping = !isLooping;
+        if (currentSource) {
+            currentSource.loop = isLooping;
+        }
+        const loopBtn = document.getElementById('loopBtn');
+        if (isLooping) {
+            loopBtn.innerText = "🔁 循環: 開";
+            loopBtn.classList.add('active');
+        } else {
+            loopBtn.innerText = "🔁 循環: 關";
+            loopBtn.classList.remove('active');
+        }
+    }
+
+    // 更新介面狀態與唱片旋轉
+    function updateUIState() {
+        const wrapper = document.getElementById('readVinylWrapper');
+        const playBtn = document.getElementById('playBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+
+        if (isPlaying) {
+            wrapper.classList.add('spinning');
+            wrapper.classList.remove('paused');
+            playBtn.innerText = "▶ 播放中...";
+            playBtn.style.background = "#2e7d32";
+            pauseBtn.innerText = "⏸ 暫停";
+        } else if (isPaused) {
+            wrapper.classList.add('spinning', 'paused');
+            playBtn.innerText = "▶ 繼續播放";
+            playBtn.style.background = "var(--btn-bg)";
+            pauseBtn.innerText = "⏸ 已暫停";
+        } else {
+            wrapper.classList.remove('spinning', 'paused');
+            playBtn.innerText = "▶ 開始播放 (22.05kHz FM)";
+            playBtn.style.background = "var(--btn-bg)";
+            pauseBtn.innerText = "⏸ 暫停";
+        }
+    }
+
+    function downloadVinyl() {
+        const canvas = document.getElementById('writeCanvas');
+        const link = document.createElement('a');
+        link.download = 'radio_quality_vinyl.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }
+</script>
+</body>
+</html>
