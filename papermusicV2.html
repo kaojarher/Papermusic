@@ -4,14 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>紙黑膠 Paper Vinyl - 讀寫與播放器</title>
-    <!-- Tailwind CSS (樣式化介面) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Identity Services & Drive API -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://apis.google.com/js/api.js" async defer></script>
 
     <style>
-        /* 擬真黑膠唱片轉動動畫 */
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -22,7 +18,6 @@
         .vinyl-paused {
             animation-play-state: paused;
         }
-        /* 唱針擺動動畫 */
         .tonearm {
             transform-origin: 20px 20px;
             transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
@@ -34,7 +29,6 @@
 </head>
 <body class="bg-zinc-900 text-zinc-100 min-h-screen flex flex-col font-sans">
 
-    <!-- 頂部導覽 -->
     <header class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-950">
         <h1 class="text-xl font-bold tracking-wider text-amber-500 flex items-center gap-2">
             <span>📻</span> 紙黑膠 Paper Vinyl
@@ -44,12 +38,9 @@
         </div>
     </header>
 
-    <!-- 主要內容區 -->
     <main class="flex-1 max-w-md w-full mx-auto p-4 flex flex-col gap-6">
 
-        <!-- 1. 黑膠播放器 UI (讀取模式) -->
         <section class="bg-zinc-950 p-6 rounded-2xl border border-zinc-800 shadow-2xl flex flex-col items-center relative overflow-hidden">
-            <!-- 唱針 -->
             <div id="tonearm" class="tonearm absolute top-4 right-12 z-20 w-12 h-32 pointer-events-none">
                 <svg viewBox="0 0 50 150" class="w-full h-full drop-shadow-md">
                     <circle cx="20" cy="20" r="12" fill="#52525b" />
@@ -58,24 +49,19 @@
                 </svg>
             </div>
 
-            <!-- 黑膠唱片盤 -->
             <div id="vinyl-disc" class="vinyl-disc vinyl-paused relative w-64 h-64 rounded-full bg-black border-4 border-zinc-800 shadow-inner flex items-center justify-center cursor-pointer my-4 group">
-                <!-- 黑膠溝槽紋理 -->
                 <div class="absolute inset-2 rounded-full border border-zinc-800/50"></div>
                 <div class="absolute inset-6 rounded-full border border-zinc-800/40"></div>
                 <div class="absolute inset-10 rounded-full border border-zinc-800/50"></div>
                 <div class="absolute inset-14 rounded-full border border-zinc-800/30"></div>
                 <div class="absolute inset-18 rounded-full border border-zinc-800/50"></div>
 
-                <!-- 唱片中央 58mm 圖案預覽區 -->
                 <div class="w-24 h-24 rounded-full overflow-hidden border-2 border-zinc-900 z-10 shadow-md relative bg-zinc-800 flex items-center justify-center">
                     <img id="label-cover" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' fill='%2327272a'/><text x='50' y='55' font-size='12' fill='%2371717a' text-anchor='middle'>貼圖區域</text></svg>" class="w-full h-full object-cover" />
-                    <!-- 唱片軸心孔 -->
                     <div class="absolute w-3 h-3 bg-zinc-950 rounded-full border border-zinc-700"></div>
                 </div>
             </div>
 
-            <!-- 音訊控制列 -->
             <audio id="audio-player" class="hidden" crossorigin="anonymous"></audio>
             <div class="text-center w-full">
                 <p id="track-title" class="font-medium text-zinc-200 text-sm truncate mb-1">請讀取 NFC 或選擇音樂</p>
@@ -86,11 +72,9 @@
             </div>
         </section>
 
-        <!-- 2. 紙黑膠刻錄與設計區 (寫入模式) -->
         <section class="bg-zinc-950 p-5 rounded-2xl border border-zinc-800 flex flex-col gap-4">
             <h2 class="text-base font-bold text-zinc-200 border-b border-zinc-800 pb-2">🛠️ 製作紙黑膠唱片</h2>
 
-            <!-- Google 授權與上傳 -->
             <div class="flex flex-col gap-2">
                 <button id="btn-auth" class="w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 font-medium rounded-lg transition border border-zinc-700">
                     1. 授權 Google Drive 存取權
@@ -99,19 +83,16 @@
                 <input type="file" id="input-audio" accept="audio/*" class="text-xs text-zinc-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-zinc-800 file:text-zinc-300 hover:file:bg-zinc-700 cursor-pointer" />
             </div>
 
-            <!-- 58mm 唱片圖案設計 -->
             <div class="flex flex-col gap-2 border-t border-zinc-800/60 pt-3">
                 <label class="text-xs text-zinc-400">3. 自定 58mm 圓形封面圖</label>
                 <input type="file" id="input-image" accept="image/*" class="text-xs text-zinc-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-zinc-800 file:text-zinc-300 hover:file:bg-zinc-700 cursor-pointer" />
                 
-                <!-- 刀模生成與下載 -->
                 <canvas id="die-canvas" class="hidden"></canvas>
                 <button id="btn-download-die" class="py-1.5 bg-zinc-800 hover:bg-zinc-700 text-xs text-amber-500 rounded-lg transition hidden border border-zinc-700">
                     💾 下載 58mm 刀模列印圖 (包含 70mm 出血)
                 </button>
             </div>
 
-            <!-- 執行刻錄與 NFC 寫入 -->
             <div class="border-t border-zinc-800/60 pt-3 flex flex-col gap-2">
                 <button id="btn-upload-drive" class="w-full py-2.5 bg-zinc-800 text-zinc-500 font-medium rounded-xl text-xs transition cursor-not-allowed" disabled>
                     4. 上傳至 Google Drive 並建立連結
@@ -128,19 +109,16 @@
         Paper Vinyl System • Powered by Web NFC & Google Drive API
     </footer>
 
-    <!-- JavaScript 邏輯實現 -->
     <script>
-        // ======================= 設定與全域變數 =======================
         const CLIENT_ID = '375971288943-097rhbub5h2d06f1g5lqs60in6pofj22.apps.googleusercontent.com';
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
-        let tokenClient;
+        let tokenClient = null;
         let accessToken = null;
         let selectedAudioFile = null;
         let selectedImageFile = null;
         let uploadedFileId = '';
 
-        // DOM 元素引用
         const audioPlayer = document.getElementById('audio-player');
         const vinylDisc = document.getElementById('vinyl-disc');
         const tonearm = document.getElementById('tonearm');
@@ -156,21 +134,19 @@
         const dieCanvas = document.getElementById('die-canvas');
         const btnDownloadDie = document.getElementById('btn-download-die');
 
-        // ======================= 1. 初始化與 URL 參數解析 (自動播放) =======================
         window.addEventListener('DOMContentLoaded', () => {
             initGsi();
             parseUrlParameters();
             setupEventListeners();
         });
 
-        // 解析 URL 中的 ?id=xxxx (自動加載 Google Drive 音訊)
+        // 修正 Google Drive 直連串流 URL 語法
         function parseUrlParameters() {
             const urlParams = new URLSearchParams(window.location.search);
             const fileId = urlParams.get('id');
             if (fileId) {
                 uploadedFileId = fileId;
-                // 利用 Google Drive 直連串流格式
-                const streamUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
+                const streamUrl = `https://docs.google.com/uc?export=download&id=${fileId}`;
                 loadAudioTrack(streamUrl, `紙黑膠單曲 (ID: ${fileId.substring(0,6)}...)`);
             }
         }
@@ -181,28 +157,35 @@
             trackStatus.textContent = '已載入音訊，點擊播放';
         }
 
-        // ======================= 2. Google OAuth 2.0 認證 =======================
+        // 確保 SDK 載入後妥善初始化
         function initGsi() {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: (tokenResponse) => {
-                    if (tokenResponse && tokenResponse.access_token) {
-                        accessToken = tokenResponse.access_token;
-                        document.getElementById('auth-status').textContent = 'Google 已連線';
-                        document.getElementById('auth-status').className = 'text-xs px-3 py-1 rounded-full bg-emerald-900/80 text-emerald-300';
-                        btnAuth.textContent = '✓ 已完成 Google 授權';
-                        checkUploadReady();
-                    }
-                },
-            });
+            if (window.google && google.accounts && google.accounts.oauth2) {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID,
+                    scope: SCOPES,
+                    callback: (tokenResponse) => {
+                        if (tokenResponse && tokenResponse.access_token) {
+                            accessToken = tokenResponse.access_token;
+                            document.getElementById('auth-status').textContent = 'Google 已連線';
+                            document.getElementById('auth-status').className = 'text-xs px-3 py-1 rounded-full bg-emerald-900/80 text-emerald-300';
+                            btnAuth.textContent = '✓ 已完成 Google 授權';
+                            checkUploadReady();
+                        }
+                    },
+                });
+            } else {
+                setTimeout(initGsi, 200);
+            }
         }
 
         btnAuth.addEventListener('click', () => {
-            tokenClient.requestAccessToken();
+            if (tokenClient) {
+                tokenClient.requestAccessToken();
+            } else {
+                alert('Google 驗證元件載入中，請稍後再試。');
+            }
         });
 
-        // ======================= 3. 音效播放與黑膠控制 =======================
         function togglePlay() {
             if (!audioPlayer.src) {
                 alert('請先讀取 NFC 唱片或挑選音樂檔案！');
@@ -228,7 +211,6 @@
             }
         }
 
-        // ======================= 4. 58mm 圓形圖案與刀模生成 =======================
         inputImage.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -238,9 +220,7 @@
             reader.onload = (event) => {
                 const img = new Image();
                 img.onload = () => {
-                    // 更新唱片中央預覽
                     labelCover.src = event.target.result;
-                    // 生成 58mm (含 70mm 出血) 印刷刀模圖
                     generateDieCutCanvas(img);
                 };
                 img.src = event.target.result;
@@ -249,15 +229,13 @@
         });
 
         function generateDieCutCanvas(img) {
-            // 以 300 DPI 計算：70mm 輸出約為 827px
             const ctx = dieCanvas.getContext('2d');
-            const size = 827; // 70mm 包含出血
+            const size = 827;
             dieCanvas.width = size;
             dieCanvas.height = size;
 
             ctx.clearRect(0, 0, size, size);
 
-            // 繪製裁切保護背景與圖片 (Center Crop)
             ctx.save();
             ctx.beginPath();
             ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
@@ -269,7 +247,6 @@
             ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
             ctx.restore();
 
-            // 繪製 58mm 安全裁切線輔助軌跡 (58mm 比例約 685px)
             ctx.beginPath();
             ctx.arc(size / 2, size / 2, 685 / 2, 0, Math.PI * 2);
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
@@ -287,11 +264,9 @@
             link.click();
         });
 
-        // ======================= 5. Google Drive 檔案上傳 =======================
         inputAudio.addEventListener('change', (e) => {
             selectedAudioFile = e.target.files[0];
             if (selectedAudioFile) {
-                // 自動帶入本機預覽
                 const localUrl = URL.createObjectURL(selectedAudioFile);
                 loadAudioTrack(localUrl, selectedAudioFile.name);
             }
@@ -313,7 +288,6 @@
             btnUploadDrive.disabled = true;
 
             try {
-                // 1. 建立 Metadata
                 const metadata = {
                     name: `PaperVinyl_${Date.now()}_${selectedAudioFile.name}`,
                     mimeType: selectedAudioFile.type || 'audio/mpeg'
@@ -323,7 +297,6 @@
                 formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
                 formData.append('file', selectedAudioFile);
 
-                // 2. 上傳至 Google Drive API v3
                 const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
                     method: 'POST',
                     headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
@@ -333,7 +306,6 @@
                 const fileData = await response.json();
                 uploadedFileId = fileData.id;
 
-                // 3. 將檔案設為公用權限 (Anyone with link)
                 await fetch(`https://www.googleapis.com/drive/v3/files/${uploadedFileId}/permissions`, {
                     method: 'POST',
                     headers: new Headers({
@@ -357,14 +329,12 @@
             }
         });
 
-        // ======================= 6. Web NFC 晶片寫入 =======================
         btnWriteNfc.addEventListener('click', async () => {
             if (!uploadedFileId) {
                 alert('請先完成檔案上傳！');
                 return;
             }
 
-            // 構建唱片目標 URL (以目前部署的 GitHub Pages 網址為基礎)
             const currentBaseUrl = window.location.href.split('?')[0];
             const targetVinylUrl = `${currentBaseUrl}?id=${uploadedFileId}`;
 
@@ -387,7 +357,6 @@
             }
         });
 
-        // 事件監聽綁定
         function setupEventListeners() {
             vinylDisc.addEventListener('click', togglePlay);
             btnPlayToggle.addEventListener('click', togglePlay);
